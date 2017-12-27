@@ -9,27 +9,32 @@ app.engine('handlebars', exphbs({defaultLayout: 'main'}));
 app.set('view engine', 'handlebars');
 
 app.get('/', function (req, res) {
-  console.log(req.query.term);
-  var queryString = "funny cat";
-  // encode to remove whitespace + restricted characters
+  console.log(req.query.term)
+  var queryString = req.query.term;
+  // rencode and remove whitespace
   var term = encodeURIComponent(queryString);
-  // search put in giphy api search
-   var url = 'http://api.giphy.com/v1/gifs/search?q=' + term + '&api_key=dc6zaTOxFJmzC';
+  // put search term in api
+  var url = 'http://api.giphy.com/v1/gifs/search?q=' + term + '&api_key=dc6zaTOxFJmzC'
 
-   http.get(url, function(response) {
-	   	//set encoding response
-	   	response.setEncoding('utf8');
+  http.get(url, function(response) {
+    // set encoding
+    response.setEncoding('utf8');
 
-	   	var body = '';
+    var body = '';
 
-	   	response.on('data', function(d) {
-	   		//when data fully received, parse
-	   		var paresed = JSON.parse(body);
-	   		//render home template with gifs
-	   		res.render('home', {gifs: parsed.data});
-		}); 
-   });
-});
+    response.on('data', function(d) {
+      // contiunally update stream
+      body += d;
+    });
+
+    response.on('end', function() {
+      // when data fully received
+      var parsed = JSON.parse(body);
+      // render home template with gif
+      res.render('home', {gifs: parsed.data})
+    });
+  });
+})
 
 app.get('/greetings/:name', function (req, res) {
   var name = req.params.name;
